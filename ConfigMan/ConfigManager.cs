@@ -11,6 +11,10 @@ using System.Management.Instrumentation;
 
 namespace ConfigMan
 {
+    /// <summary>
+    /// Nuget 패키지 설치 : NewtonSoft.Json
+    /// <para>install-package newtonsoft.Json</para>
+    /// </summary>
     public class ConfigManager
     {
         private DirectoryInfo _dir;

@@ -37,10 +37,10 @@ namespace ConfigMan
             get { return _configData; }
         }
 
-        public Type ConfigType
-        {
-            get { return _type; }
-        }
+        //public Type ConfigType
+        //{
+        //    get { return _type; }
+        //}
 
         public ConfigManager(string directory, string file_name)
         {

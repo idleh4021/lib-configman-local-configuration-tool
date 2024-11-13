@@ -22,7 +22,7 @@ namespace ConfigMan
         private string _directory;
         private string _file_name;
 
-        private Type _type;
+        //private Type _type;
 
         private string _default_directory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         public string DefaultDirectory

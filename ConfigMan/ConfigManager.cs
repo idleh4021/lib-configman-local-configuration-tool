@@ -67,7 +67,7 @@ namespace ConfigMan
         {
             if (!_dir.Exists) { _dir.Create(); }
             JObject jobj = JObject.FromObject(config);
-            _type = config.GetType();
+            //_type = config.GetType();
             File.WriteAllText(_file.FullName, jobj.ToString());
         }
 

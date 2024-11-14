@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System.Management.Instrumentation;
+using System.Security.Cryptography;
 
 namespace ConfigMan
 {
@@ -21,21 +22,29 @@ namespace ConfigMan
         private FileInfo _file;
         private string _directory;
         private string _file_name;
-
-        //private Type _type;
-
-        private string _default_directory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        public string DefaultDirectory
-        {
-            get { return _default_directory; }
-            set { _default_directory = value; }
-        }
-
+        private string _directory_path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         private object _configData;
+        private bool _encryption=false;
+        private string _encrypt_key;
+        private string _myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+        public string MyDocumentsPath
+        {
+            get { return _myDocumentsPath; }
+        }
+        //private Type _type;
+        public string DirectoryPath
+        {
+            get { return _directory_path; }
+            set { _directory_path = value; }
+        }
         public object ConfigData
         {
             get { return _configData; }
         }
+
+        public bool Encryption { get => _encryption; set => _encryption = value; }
+        public string Encryptkey { /*get => _encrypt_key; */set => _encrypt_key = value; }
 
         //public Type ConfigType
         //{
@@ -58,6 +67,7 @@ namespace ConfigMan
         public Object Open(Type type)
         {
             string str_json = File.ReadAllText(_file.FullName);
+            if (Encryption) { str_json = Decrypt(str_json, _encrypt_key); }
             Object jobj = JsonConvert.DeserializeObject(str_json,type);
             _configData = jobj;
             return _configData;
@@ -65,15 +75,17 @@ namespace ConfigMan
 
         public void Save(object config)
         {
+            string strconfig;
             if (!_dir.Exists) { _dir.Create(); }
             JObject jobj = JObject.FromObject(config);
             //_type = config.GetType();
-            File.WriteAllText(_file.FullName, jobj.ToString());
+            strconfig = (Encryption) ? Encrypt(jobj.ToString(),_encrypt_key) : jobj.ToString();
+            File.WriteAllText(_file.FullName, strconfig);
         }
 
         private DirectoryInfo GetDir()
         {
-            return new DirectoryInfo(_default_directory + "/" + _directory);
+            return new DirectoryInfo(_directory_path + "/" + _directory);
         }
 
         private FileInfo GetFile()
@@ -84,6 +96,71 @@ namespace ConfigMan
         public void Remove()
         {
             _file.Delete();
+        }
+
+
+        private string Encrypt(string sourceText,string key)
+        {
+            if(string.IsNullOrEmpty(key)) { throw new Exception("암호화 키가 설정되어 있지 않습니다."); }
+            byte[] iv = new byte[16];
+            byte[] array;
+            byte[] keyBytes = GetKeyBytes(key);
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = keyBytes;//Encoding.UTF8.GetBytes(key);
+                aes.IV = iv;
+
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter sw = new StreamWriter(cs))
+                        {
+                            sw.Write(sourceText);
+                        }
+                        array = ms.ToArray();
+                    }
+                }
+            }
+            return Convert.ToBase64String(array);
+        }
+
+        private string Decrypt(string sourceText,string key)
+        {
+            if (string.IsNullOrEmpty(key)) { throw new Exception("암호화 키가 설정되어 있지 않습니다."); }
+            byte[] iv = new byte[16];
+            byte[] buffer = Convert.FromBase64String(sourceText);
+            byte[] keyBytes = GetKeyBytes(key);
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = keyBytes;//Encoding.UTF8.GetBytes(key);
+                aes.IV = iv;
+
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+
+                using (MemoryStream ms = new MemoryStream(buffer))
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader sr = new StreamReader(cs))
+                        {
+                            return sr.ReadToEnd();
+                        }
+                    }
+                }
+            }
+        }
+
+        private byte[] GetKeyBytes(string key)
+        {
+            // 입력된 키를 SHA256 해시로 변환하여 256비트(32바이트) 키 생성
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                return sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
+            }
         }
 
     }

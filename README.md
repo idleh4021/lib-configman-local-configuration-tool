@@ -16,7 +16,7 @@
 ## 소개
 <!--프로젝트에 대한 자세한 설명을 여기에 작성합니다.  -->
 - **개발환경** : C#, .Net FrameWork 4.7.2 
-- **주요기능** : 저장,읽기,삭제
+- **주요기능** : 저장,읽기,삭제,암호화
 ```
   ConfigManager config = new ConfigManager("TesterSystem","config1");
   TestConfig test = new TestConfig();
@@ -31,6 +31,10 @@
   object result = config.Open(typeof(TestConfig));
   //삭제
   config.Remove();
+
+  //암호화
+  config.Encryption = true;
+  config.Encryptkey = "test123";
 ```
 
 ## 설치
@@ -63,25 +67,37 @@ install-package newtonsoft.Json
     //삭제
     config.Remove();
    ```
+5. 암호화
+   ```
+      config.Encryption = true;
+      config.Encryptkey = "test123";
+      .
+      .
+      .
+      //저장 또는 읽기
+       config.Save(test);
+       object result = config.Open(typeof(TestConfig));
+   ```
 
  ## 예제
  
  ```
   static void Main(string[] args)
- {
-     ConfigManager config = new ConfigManager("ProgramName","configfileName");
-     TestConfig test = new TestConfig();
-     test.name = "23";
-     test.maxValue= 100;
-     test.minValue = 0;
-     test.enabled= true;
-     config.Save(test);
-    
-     object result = config.Open(typeof(TestConfig));
-     if (result is TestConfig) Console.WriteLine(((TestConfig)result).name);
-     else Console.WriteLine("Fail");
-   
- }
+   {
+   ConfigManager config = new ConfigManager("ProgramName","configfileName");
+   config.Encryption = true;
+   config.Encryptkey = "test123";
+   TestConfig test = new TestConfig();
+   test.name = "23";
+   test.maxValue= 100;
+   test.minValue = 0;
+   test.enabled= true;
+   config.Save(test);
+
+   object result = config.Open(typeof(TestConfig));
+   if (result is TestConfig) Console.WriteLine(((TestConfig)result).name);
+   else Console.WriteLine("Fail");
+   }
 
  class TestConfig
  {

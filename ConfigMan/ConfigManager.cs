@@ -83,12 +83,13 @@ namespace ConfigMan
             File.WriteAllText(_file.FullName, strconfig);
         }
 
-        private DirectoryInfo GetDir()
+        public DirectoryInfo GetDir()
         {
-            return new DirectoryInfo(_directory_path + "/" + _directory);
-        }
+            if(string.IsNullOrEmpty(_directory)) return new DirectoryInfo(_directory_path);
+            else return new DirectoryInfo(_directory_path + "/" + _directory);
+        } 
 
-        private FileInfo GetFile()
+        public FileInfo GetFile()
         {
             return new FileInfo(GetDir() + "/" + _file_name + ".config");
         }

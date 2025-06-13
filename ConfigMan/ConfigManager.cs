@@ -22,11 +22,11 @@ namespace ConfigMan
         private FileInfo _file;
         private string _directory;
         private string _file_name;
-        private string _directory_path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        private string _directory_path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).Replace("/","\\");
         private object _configData;
         private bool _encryption=false;
         private string _encrypt_key;
-        private string _myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        private string _myDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).Replace("/", "\\");
 
         public string MyDocumentsPath
         {
@@ -36,7 +36,7 @@ namespace ConfigMan
         public string DirectoryPath
         {
             get { return _directory_path; }
-            set { _directory_path = value; }
+            set { _directory_path = value.Replace("/", "\\"); }
         }
         public object ConfigData
         {
@@ -53,7 +53,7 @@ namespace ConfigMan
 
         public ConfigManager(string directory, string file_name)
         {
-            _directory = directory;
+            _directory = directory.Replace("/", "\\"); ;
             _file_name = file_name;
             _dir = GetDir();
             _file = GetFile();
@@ -66,7 +66,7 @@ namespace ConfigMan
         /// <returns></returns>
         public Object Open(Type type)
         {
-            string str_json = File.ReadAllText(_file.FullName);
+            string str_json = File.ReadAllText(GetFile().FullName);
             if (Encryption) { str_json = Decrypt(str_json, _encrypt_key); }
             Object jobj = JsonConvert.DeserializeObject(str_json,type);
             _configData = jobj;
@@ -76,22 +76,22 @@ namespace ConfigMan
         public void Save(object config)
         {
             string strconfig;
-            if (!_dir.Exists) { _dir.Create(); }
+            if (!GetDir().Exists) { GetDir().Create(); }
             JObject jobj = JObject.FromObject(config);
             //_type = config.GetType();
             strconfig = (Encryption) ? Encrypt(jobj.ToString(),_encrypt_key) : jobj.ToString();
-            File.WriteAllText(_file.FullName, strconfig);
+            File.WriteAllText(GetFile().FullName, strconfig);
         }
 
         public DirectoryInfo GetDir()
         {
-            if(string.IsNullOrEmpty(_directory)) return new DirectoryInfo(_directory_path);
-            else return new DirectoryInfo(_directory_path + "/" + _directory);
+            if(string.IsNullOrEmpty(_directory)) return new DirectoryInfo(_directory_path.Replace("/", "\\"));
+            else return new DirectoryInfo(_directory_path.Replace("/", "\\") + _directory.Replace("/", "\\"));
         } 
 
         public FileInfo GetFile()
         {
-            return new FileInfo(GetDir() + "/" + _file_name + ".config");
+            return new FileInfo(GetDir() +_file_name.Replace("/", "\\") + ".config");
         }
 
         public void Remove()
